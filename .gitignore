@@ -7,3 +7,16 @@ models/
 build/
 .vscode/
 .DS_Store
+
+# Credentials, secrets, and runtime caches.
+credentials/
+credentials.*
+secrets/
+*.secret
+*.pem
+*.key
+.cache/
+cache/
+tmp/
+temp/
+*.log
