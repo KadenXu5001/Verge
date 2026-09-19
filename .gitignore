@@ -1,0 +1,9 @@
+# Model weights are large and must not be committed.
+*.gguf
+*.gguf.*
+models/
+
+# Local build and editor state.
+build/
+.vscode/
+.DS_Store
