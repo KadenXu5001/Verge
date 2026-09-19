@@ -1,0 +1,30 @@
+#!/bin/sh
+# NetworkManager dispatcher hook for the demo laptop.
+#
+# Opens the setup form automatically when the direct cable to the Pi comes up.
+# Install (as root):
+#   install -m 755 -o root -g root 90-pi-setup-form /etc/NetworkManager/dispatcher.d/
+#
+# Requires the "pi-direct" connection profile and the Pi reachable at PI_ADDR.
+
+PI_ADDR=10.44.0.1
+PORT=8080
+SESSION_USER=nigelg
+SESSION_UID=1000
+
+[ "$CONNECTION_ID" = "pi-direct" ] && [ "$2" = "up" ] || exit 0
+
+# NetworkManager kills slow dispatcher scripts, so the wait for the Pi's web
+# server runs in a detached user unit rather than inline.
+runuser -u "$SESSION_USER" -- \
+  env "XDG_RUNTIME_DIR=/run/user/$SESSION_UID" \
+      "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$SESSION_UID/bus" \
+  systemd-run --user --quiet --collect --unit=pi-setup-form \
+  /bin/sh -c '
+    url="http://$1:$2/"
+    for _ in $(seq 90); do
+      if curl -sf -m 2 -o /dev/null "$url"; then
+        exec xdg-open "$url"
+      fi
+      sleep 1
+    done' pi-setup-form "$PI_ADDR" "$PORT"
