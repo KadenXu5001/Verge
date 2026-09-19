@@ -13,106 +13,124 @@ PROFILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profile
 MAX_BODY_BYTES = 64 * 1024
 
 
-def page(title, body):
+STYLE = """
+:root{
+  --paper:#f3efe7; --ink:#191817; --muted:#6f6a61;
+  --line:#d7d1c4; --field:#fbf9f5; --accent:#c14a25;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.5;
+}
+.wrap{max-width:620px; margin:0 auto; padding:56px 24px 80px}
+header{border-bottom:2px solid var(--ink); padding-bottom:18px; margin-bottom:34px}
+.kicker{
+  margin:0 0 10px; font-size:12px; font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--accent);
+}
+h1{
+  margin:0; font-size:clamp(30px,7vw,46px); line-height:1.02;
+  letter-spacing:-.02em; text-transform:uppercase; font-weight:800;
+}
+.lead{margin:16px 0 0; max-width:46ch; color:var(--muted); font-size:15px}
+form{display:grid; gap:22px}
+.row{display:grid; gap:22px; grid-template-columns:1fr 1fr}
+@media(max-width:460px){.row{grid-template-columns:1fr}}
+label{display:block}
+.lab{
+  display:block; margin:0 0 7px; font-size:11px; font-weight:700;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+}
+input,select{
+  width:100%; padding:12px 13px; font:inherit; color:var(--ink);
+  background:var(--field); border:1px solid var(--line); border-radius:2px;
+  -webkit-appearance:none; appearance:none;
+}
+input::placeholder{color:#b3ab9c}
+input:focus,select:focus{outline:none; border-color:var(--ink)}
+select{
+  padding-right:38px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236f6a61' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 13px center;
+}
+button{
+  justify-self:start; margin-top:4px; padding:14px 34px; font:inherit;
+  font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--paper); background:var(--ink); border:0; border-radius:2px; cursor:pointer;
+}
+button:hover{background:var(--accent)}
+.note{margin:0 0 26px; color:var(--muted); font-size:14px}
+.summary{width:100%; border-collapse:collapse; margin:0 0 30px}
+.summary th,.summary td{
+  padding:13px 0; text-align:left; vertical-align:baseline;
+  border-bottom:1px solid var(--line); font-size:15px;
+}
+.summary th{
+  width:46%; font-size:11px; font-weight:700; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--muted);
+}
+.errs{list-style:none; margin:0 0 30px; padding:0; display:grid; gap:10px}
+.errs li{
+  padding:12px 14px; background:#fbeee9; border-left:3px solid var(--accent);
+  color:#7a2f16; font-size:14px;
+}
+a.back{
+  display:inline-block; font-size:12px; font-weight:700; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink); text-decoration:none;
+  border-bottom:2px solid var(--accent); padding-bottom:3px;
+}
+"""
+
+
+def page(title, body, kicker="Thermal Monitor"):
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
+<style>{STYLE}</style>
 </head>
 <body>
+<div class="wrap">
+<header>
+<p class="kicker">{html.escape(kicker)}</p>
 <h1>{html.escape(title)}</h1>
+</header>
 {body}
+</div>
 </body>
 </html>
 """
 
 
-FORM_PAGE = page("Thermal monitor setup", """<form method="post" action="/submit">
-<h2>Profile</h2>
-<p><label for="height_cm">Height in cm (100 to 250, required)</label> <input id="height_cm" name="height_cm" required></p>
-<p><label for="weight_kg">Weight in kg (30 to 250, required)</label> <input id="weight_kg" name="weight_kg" required></p>
-<p><label for="age">Age (13 to 100)</label> <input id="age" name="age"></p>
-<p><label for="sex">Sex</label> <select id="sex" name="sex">
-<option value="">Not specified</option>
+FORM_PAGE = page("Setup Profile", """<p class="lead">Enter the wearer's measurements once. The device computes surface area and stores a profile the sensor reads.</p>
+<form method="post" action="/submit">
+<div class="row">
+<label><span class="lab">Height &middot; cm</span><input name="height_cm" required inputmode="decimal" placeholder="100&ndash;250"></label>
+<label><span class="lab">Weight &middot; kg</span><input name="weight_kg" required inputmode="decimal" placeholder="30&ndash;250"></label>
+</div>
+<div class="row">
+<label><span class="lab">Age</span><input name="age" inputmode="numeric" placeholder="13&ndash;100"></label>
+<label><span class="lab">Clothing layers</span><input name="clothing_layers" inputmode="numeric" placeholder="0&ndash;8"></label>
+</div>
+<div class="row">
+<label><span class="lab">Sex</span><select name="sex">
+<option value="">&mdash;</option>
 <option value="m">Male</option>
 <option value="f">Female</option>
-</select></p>
-<p><label for="fitness_level">Fitness level</label> <select id="fitness_level" name="fitness_level">
-<option value="">Not specified</option>
+</select></label>
+<label><span class="lab">Fitness level</span><select name="fitness_level">
+<option value="">&mdash;</option>
 <option value="low">Low</option>
 <option value="moderate">Moderate</option>
 <option value="high">High</option>
-</select></p>
-<p><label for="clothing_layers">Clothing layers (0 to 8)</label> <input id="clothing_layers" name="clothing_layers"></p>
-<h2>Reaction time baseline</h2>
-<p>Click the box to start a round. After a short random delay it turns green; click it again as soon as it does. Five rounds are needed. Clicking before it turns green voids that round.</p>
-<p><button type="button" id="box"><svg width="240" height="120"><rect id="rect" width="240" height="120" fill="gray"></rect></svg></button></p>
-<p id="status">Click the box to start round 1 of 5.</p>
-<input type="hidden" id="baseline_ms" name="baseline_ms">
-<p><button type="submit" id="submit" disabled>Save profile</button></p>
-</form>
-<script>
-(function () {
-  var ROUNDS = 5;
-  var box = document.getElementById("box");
-  var rect = document.getElementById("rect");
-  var statusLine = document.getElementById("status");
-  var baseline = document.getElementById("baseline_ms");
-  var submit = document.getElementById("submit");
-  var times = [];
-  var state = "idle";
-  var timer = null;
-  var greenAt = 0;
-
-  // The page carries no CSS, so the box colour is the SVG fill attribute.
-  function setBox(fill, message) {
-    rect.setAttribute("fill", fill);
-    statusLine.textContent = message;
-  }
-
-  function startRound(prefix) {
-    state = "waiting";
-    setBox("red", prefix + "Round " + (times.length + 1) + " of " + ROUNDS + ": wait for green.");
-    timer = setTimeout(function () {
-      state = "green";
-      greenAt = performance.now();
-      setBox("green", "Click!");
-    }, 1000 + Math.random() * 2000);
-  }
-
-  function finish() {
-    state = "done";
-    var kept = times.slice().sort(function (a, b) { return a - b; }).slice(0, ROUNDS - 1);
-    var sum = 0;
-    for (var i = 0; i < kept.length; i++) sum += kept[i];
-    var mean = sum / kept.length;
-    var rounded = times.map(function (t) { return Math.round(t); });
-    baseline.value = mean.toFixed(1);
-    box.disabled = true;
-    submit.disabled = false;
-    setBox("gray", "Baseline " + mean.toFixed(1) + " ms: mean of the fastest 4 of " + rounded.join(", ") + " ms. You can now save the profile.");
-  }
-
-  box.addEventListener("click", function () {
-    if (state === "idle") {
-      startRound("");
-    } else if (state === "waiting") {
-      clearTimeout(timer);
-      startRound("Too early, round repeats. ");
-    } else if (state === "green") {
-      var ms = performance.now() - greenAt;
-      times.push(ms);
-      if (times.length === ROUNDS) {
-        finish();
-      } else {
-        state = "idle";
-        setBox("gray", Math.round(ms) + " ms. Click the box to start round " + (times.length + 1) + " of " + ROUNDS + ".");
-      }
-    }
-  });
-})();
-</script>""")
+</select></label>
+</div>
+<button type="submit">Save profile</button>
+</form>""", kicker="One-time device setup")
 
 
 def validate(fields):
@@ -165,7 +183,6 @@ def validate(fields):
     sex = choice("sex", ("m", "f"))
     fitness_level = choice("fitness_level", ("low", "moderate", "high"))
     clothing_layers = integer("clothing_layers", 0, 8)
-    baseline_ms = number("baseline_ms", 80, 2000, required=True)
     if errors:
         return None, errors
 
@@ -179,7 +196,6 @@ def validate(fields):
         "sex": sex,
         "fitness_level": fitness_level,
         "clothing_layers": clothing_layers,
-        "baseline_ms": baseline_ms,
         "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
     return profile, []
@@ -200,9 +216,10 @@ def write_profile(profile):
 
 def error_page(errors):
     items = "".join(f"<li>{html.escape(e)}</li>\n" for e in errors)
-    return page("Profile not saved", f"""<ul>
+    return page("Not Saved", f"""<p class="note">Nothing was written. Fix the following and try again.</p>
+<ul class="errs">
 {items}</ul>
-<p><a href="/">Back to the form</a></p>""")
+<a class="back" href="/">Back to the form</a>""", kicker="Validation failed")
 
 
 def confirmation_page(profile):
@@ -214,12 +231,13 @@ def confirmation_page(profile):
         return str(value)
 
     rows = "".join(
-        f"<dt>{html.escape(key)}</dt><dd>{html.escape(display(value))}</dd>\n"
+        f'<tr><th>{html.escape(key.replace("_", " "))}</th><td>{html.escape(display(value))}</td></tr>\n'
         for key, value in profile.items()
     )
-    return page("Profile saved", f"""<p>Written to {html.escape(PROFILE_PATH)}</p>
-<dl>
-{rows}</dl>""")
+    return page("Profile Saved", f"""<p class="note">Written to {html.escape(PROFILE_PATH)} &middot; the sensor reads this file.</p>
+<table class="summary">
+{rows}</table>
+<a class="back" href="/">Set up another</a>""", kicker="Setup complete")
 
 
 class SetupHandler(BaseHTTPRequestHandler):
